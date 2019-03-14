@@ -13,7 +13,7 @@ float lastPressure;
 // 設定から読み込む値。
 bool doVerticalFlip;
 
-void initializeWiFi() {
+void readConfig() {
   // 設定を読んで
   File f = SPIFFS.open(settings, "r");
   ssid = f.readStringUntil('\n');
@@ -22,6 +22,7 @@ void initializeWiFi() {
   verticalFlip = f.readStringUntil('\n');   
   f.close();
 
+  // 読み込んだ値に余計なものがついているので削除
   verticalFlip.trim();
   ssid.trim();
   password.trim();
@@ -33,10 +34,23 @@ void initializeWiFi() {
   Serial.println("mDNS: " + mDNS);
   Serial.print("flip: ");
   Serial.println((doVerticalFlip ? "TRUE" : "FALSE"));
+}
 
+void setupMdns() {
+  // mDNS responder
+  if ( MDNS.begin ( mDNS.c_str() ) ) {
+    Serial.println ( "mDNS responder started " + mDNS );
+    MDNS.addService("http", "tcp", 80);
+  } else {
+    Serial.println ( "mDNS responder failed " + mDNS );
+    mDNS = "no mDNS";
+  }  
+}
+
+void initializeWiFi() {
   WiFi.begin(ssid.c_str(), password.c_str());
 
-  Serial.println("WiFi connection start.");      
+  Serial.println("WiFi connection start.");
   int retryCount = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -62,15 +76,6 @@ void initializeWiFi() {
 
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-
-  // mDNS responder
-  if ( MDNS.begin ( mDNS.c_str() ) ) {
-    Serial.println ( "mDNS responder started " + mDNS );
-    MDNS.addService("http", "tcp", 80);
-  } else {
-    Serial.println ( "mDNS responder failed " + mDNS );
-    mDNS = "no mDNS";
-  }
 }
 
 void setup_normal() {
@@ -79,9 +84,12 @@ void setup_normal() {
 
   showStartupScreen();
 
-  initializeWiFi();
+  readConfig();
 
+  initializeWiFi();
   showWifiInfo();
+
+  setupMdns();
 
   // init BME
   while(!bme.begin()){
@@ -89,6 +97,16 @@ void setup_normal() {
     delay(1000);
   }
   delay(500);
+
+  // init LPS22HB if found (0x5d)
+  if (lps22hb.init()) {
+      Serial.println("Barometric sensor initialization succeeded!");
+      lps22hb.enableSensor(Sodaq_LPS22HB::OdrOneShot);
+      useLPS22HB = true;
+  } else {
+      useLPS22HB = false;
+      Serial.println("Barometric sensor initialization failed!");
+  }
 
   server.on ( "/ping", handlePing );
   server.on ( "/", handleData );
@@ -285,14 +303,26 @@ void readData() {
   Serial.print("Temp: ");
   Serial.print(temp, 2);
   Serial.print("C");
-  Serial.print("\t\tHumidity: ");
+  Serial.print("\tHumidity: ");
   Serial.print(hum, 2);
   Serial.print("%");
-  Serial.print("\t\tPressure: ");
+
+  Serial.print("\tPressure (by BME): ");
   Serial.print(pres, 2);
   Serial.println("hPa");
+  lastPressure = pres;
+
+  if (useLPS22HB) {
+    float tempPres(NAN);
+    tempPres = lps22hb.readPressureHPA();
+    if (tempPres != 0) {
+      lastPressure = tempPres;      
+      Serial.print("Pressure (by LPS22HB): ");
+      Serial.print(tempPres, 2);
+      Serial.println("hPa");
+    }
+  }
 
   lastTemp = temp;
   lastHumidity = hum;
-  lastPressure = pres;
 }

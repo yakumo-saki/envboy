@@ -1,3 +1,6 @@
+// using sodaq_lps22hb ver 1.0.0
+#include <Sodaq_LPS22HB.h>
+
 #include <BME280I2C.h>
 
 #include <ESP8266WiFi.h>
@@ -14,6 +17,9 @@
 
 ESP8266WebServer server(80);
 
+Sodaq_LPS22HB lps22hb;
+bool useLPS22HB = false;
+
 // LCD Display
 SSD1306 display(0x3c, 5, 4);
 
@@ -24,10 +30,11 @@ const char* configured_file = "/config_ok.txt";
 bool isNormal = true;
 
 String product_short = "eb3";
-String product = "EnvBoy3.3";
+String product = "EnvBoy3.4";
 String build_date = "2019/03/14";
-String product_long = product + " rev 3";
+String product_long = product + " rev 4";
 
+// config
 // setup時は、setup用SSID。 normal時は接続先SSID
 String ssid = "";
 String password = "";
