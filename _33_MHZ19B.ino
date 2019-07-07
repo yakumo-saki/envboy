@@ -51,8 +51,12 @@ void mhz_read_data() {
     }
 
     lastPpm = mhz19->getPPM(MHZ19_POTOCOL::UART);
+    int temp = mhz19->getTemperature();
+    
     Serial.printf("MH-Z19B: PPM=");
     Serial.print(lastPpm);
+    Serial.print(" Temparature=");
+    Serial.print(temp);
     Serial.print("\n");
 
     // MQTT: if ppm == -1 , MH-Z19 error.
