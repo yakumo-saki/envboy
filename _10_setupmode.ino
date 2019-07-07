@@ -38,14 +38,12 @@ void handleRootGet() {
   html += "  以下の設定は、mDNS(Rendezvous) の名前です。LAN内の他の端末等と重複しないようにして下さい。<br>";
   html += "  ハイフン、アンダースコアを使用すると名前解決に失敗する可能性があるため非推奨です。<br>";
   html += "  <input type='text' name='mdnsname' placeholder='mdnsname' value='" + ssid + "'><br>";
-  html += "  画面表示を上下反転するか否かの設定です。今見えている画面が正常であれば、1、そうでなければ 0 を設定して下さい。<br>";
-  html += "  <input type='text' name='vflip' placeholder='1 = yes 0 = no' value=''><br>";
   html += "  <br>";
   html += "  <input type='submit' value='設定する'><br>";
   html += "</form>";
   html += "<br>";
   html += "<hr>";
-  html += product_long + ", Copyright 2018-2019 ziomatrix.org.";
+  html += product_long + ", Copyright 2018 ziomatrix.org.";
   html += "</html>";
 
   server.send(200, "text/html", html);
@@ -121,8 +119,10 @@ void setup_server() {
 void showSetupStartupScreen() {
   // display init and show initial screen
   display.init();
-  
-  display.flipScreenVertically();
+  if (needFlip) {
+    display.flipScreenVertically();
+  }
+
   display.setFont(ArialMT_Plain_16);
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -135,3 +135,4 @@ void showSetupStartupScreen() {
 
   delay(1000);  
 }
+
