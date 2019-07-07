@@ -4,6 +4,9 @@ extern float lastHumidity;
 extern float lastPressure;
 extern float lastLuxFull;
 extern float lastLuxIr;
+extern int lastPpm;
+
+int MAX_BAR = 22; // reconfigure 待ちの bar本数
 
 void showStartupScreen(String product_long) {
   display.init();
@@ -25,10 +28,7 @@ void showStartupScreen(String product_long) {
 
 void showWifiInfo(String ip, String mDNS) {
   display.init();
-
-//  String ssidStr = "SSID ";
-//  ssidStr.concat(ssid);
-  
+ 
   if (needFlip) {
     display.flipScreenVertically();
   }
@@ -77,7 +77,6 @@ void showWaitForReconfig() {
   display.drawString(0, 32, "Power off now");
   display.drawString(0, 48, " to re-configure");
 
-  int MAX_BAR = 25;
   for (int i = 0; i < MAX_BAR; i++) {
     String bar = "*";
     for(int j = 0; j < MAX_BAR; j++) {
@@ -102,10 +101,23 @@ void show_main(String ip, String mdns) {
   display.drawString(0, 0, product); 
 
   display.setFont(ArialMT_Plain_16);
-  display.drawString(0, 19, "T:" + String(lastTemp, 1) + "c" + " H:" + String(lastHumidity, 1) + "%" ); 
-  display.drawString(0, 34, "P:" + String(lastPressure, 1) + " " + "L:" + String(lastLuxFull, 0)); 
-  display.drawString(0, 49, String("CO2:") + String("1234ppm") ); 
-  // "L:" + String(lastLuxFull, 0) + " " + "Ir:" + String(lastLuxIr, 0)
+  display.drawString(0, 19, "T:" + String(lastTemp, 1) + "c" + " " + "H:" + String(lastHumidity, 1) + "%" ); 
+
+  // LINE2
+  String line2 = "P:" + String(lastPressure, 1);
+  if (lastLuxFull >= 0) {
+    line2 = line2 + " " + "L:" + String(lastLuxFull, 0);
+  } else {
+    line2 = line2 + " " + "L: -";    
+  }
+  display.drawString(0, 34, line2);
+
+  if (lastPpm > 0) {
+    display.drawString(0, 49, String("CO2:") + String(lastPpm) + "ppm" );   
+  } else {
+    display.drawString(0, 49, String("CO2:") + "-" );       
+  }
+
   display.display();
 
 }

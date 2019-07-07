@@ -5,14 +5,6 @@ extern Tsl2561 Tsl;
 
 int counter;
 
-
-// 最後に取得した温度
-extern float lastTemp;
-extern float lastHumidity;
-extern float lastPressure;
-extern float lastLuxFull;
-extern float lastLuxIr;
-
 void setup_normal() {
   WiFi.softAPdisconnect(true);
   WiFi.enableAP(false);
@@ -25,7 +17,9 @@ void setup_normal() {
 
   bme_setup();
   tsl_setup();
-
+  mhz_setup();
+  lps22hb_setup();
+  
   server_setup();
 
   delay(500);
@@ -54,6 +48,19 @@ void loop_normal() {
   readData();
 
   delay(2000);
+}
+
+
+void readData() {
+
+  bme_read_data();
+
+  tsl_read_data();
+
+  lps22hb_read_data();
+
+  mhz_read_data();
+  
 }
 
 void initializeWiFi() {
@@ -97,26 +104,6 @@ void initializeWiFi() {
     Serial.println ( "mDNS responder failed " + mDNS );
     mDNS = "no mDNS";
   }
-}
-
-
-void readData() {
-
-  if (true) {
-    readDataBme280();
-  } else {
-    lastTemp = 0;
-    lastHumidity = 0;
-    lastPressure = 0;    
-  }
-
-  if (Tsl.available()) {
-    readDataTsl2561();
-  } else {
-    lastLuxFull = 0;
-    lastLuxIr = 0;
-  }
-  
 }
 
 void checkAndReconnectWifi() {

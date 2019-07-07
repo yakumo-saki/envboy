@@ -30,9 +30,9 @@ const char* configured_file = "/config_ok.txt";
 
 bool isNormal = true;
 
-String product_short = "eb5";
-String product = "EnvBoy5";
-String product_long = product + " rev 1";
+String product_short = "eb";
+String product = "EnvBoy";
+String product_long = product + " rev 5.1";
 
 // setup時は、setup用SSID。 normal時は接続先SSID
 String ssid = "";

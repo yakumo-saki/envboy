@@ -2,8 +2,6 @@
 
 Tsl2561 Tsl(Wire);
 
-bool use_tsl = false;
-
 float lastLuxFull;
 float lastLuxIr;
 
@@ -15,7 +13,17 @@ void tsl_setup() {
   }
 }
 
-void readDataTsl2561() {
+void tsl_read_data() {
+  if (Tsl.available()) {
+    tsl_readdata_impl();
+  } else {
+    lastLuxFull = -1;
+    lastLuxIr = -1;
+  }
+
+}
+
+void tsl_readdata_impl() {
   uint8_t id;
   uint16_t full, ir;
 
