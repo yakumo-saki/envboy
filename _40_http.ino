@@ -30,13 +30,19 @@ void handleData() {
   int hr = min / 60;
 
   char temp[16], hum[16], pres[16];
-  char lux[16], luxIr[16];
+  char lux[16], luxIr[16], ppm[16];
+
+  if (lastPpm > 0) {
+    dtostrf(lastPpm, 0, 0, ppm);
+  } else {
+    snprintf(ppm, sizeof ppm, "ERROR");
+  }
 
   snprintf ( buf, sizeof buf,
-    "{ \"uptime\": \"%02d:%02d:%02d\", \"uptimeMills\": \"%02d\", \"temparature\": \"%s\", \"humidity\": \"%s\", \"pressure\": \"%s\",\"luminous\": \"%s\", \"luminousIr\": \"%s\" }"
+    "{ \"uptime\": \"%02d:%02d:%02d\", \"uptimeMills\": \"%02d\", \"temparature\": \"%s\", \"humidity\": \"%s\", \"pressure\": \"%s\",\"luminous\": \"%s\", \"luminousIr\": \"%s\", \"co2ppm\": \"%s\" }"
     , hr, min % 60, sec % 60, millis()
     , dtostrf(lastTemp, 0, 2, temp), dtostrf(lastHumidity, 0, 2, hum), dtostrf(lastPressure, 0, 2, pres)
-    , dtostrf(lastLuxFull, 0, 0, lux), dtostrf(lastLuxIr, 0, 0, luxIr)
+    , dtostrf(lastLuxFull, 0, 0, lux), dtostrf(lastLuxIr, 0, 0, luxIr), ppm
   );
   server.send ( 200, F("application/json"), buf );
 }

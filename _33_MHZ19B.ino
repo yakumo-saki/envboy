@@ -19,6 +19,10 @@ bool use_MHZ19 = true;
 
 int lastPpm = -1;
 
+// 毎秒データを取りに行くとコケる為
+const int MHZ_GET_DATA_TICK = 3;
+int mhz_tick_count = 99;
+
 void mhz_setup() {
   mhz19->begin(mhz_rx_pin, mhz_tx_pin);
   mhz19->setAutoCalibration(AUTO_BASELINE_CORRECTION);
@@ -41,6 +45,14 @@ void mhz_setup() {
 }
 
 void mhz_read_data() {
+
+  if (mhz_tick_count > MHZ_GET_DATA_TICK) {
+    mhz_tick_count = 0;
+  } else {
+    Serial.printf("MH-Z19B: DEBUG:not tick, skip.");
+    mhz_tick_count++;
+    return;
+  }
 
   if (use_MHZ19) {
     lastPpm = 0;

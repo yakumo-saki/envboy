@@ -6,6 +6,8 @@ extern float lastLuxFull;
 extern float lastLuxIr;
 extern int lastPpm;
 
+int display_last_ppm;  // センサーがエラーの時でも値をホールドする変数
+
 int MAX_BAR = 22; // reconfigure 待ちの bar本数
 
 void showStartupScreen(String product_long) {
@@ -101,21 +103,26 @@ void show_main(String ip, String mdns) {
   display.drawString(0, 0, product); 
 
   display.setFont(ArialMT_Plain_16);
-  display.drawString(0, 19, "T:" + String(lastTemp, 1) + "c" + " " + "H:" + String(lastHumidity, 1) + "%" ); 
+  display.drawString(0, 19, "T:" + String(lastTemp, 1) + "c" + "  " + "H:" + String(lastHumidity, 1) + "%" ); 
 
   // LINE2
   String line2 = "P:" + String(lastPressure, 1);
   if (lastLuxFull >= 0) {
-    line2 = line2 + " " + "L:" + String(lastLuxFull, 0);
+    line2 = line2 + " " + "L:" + String(lastLuxFull, 0) + "lx";
   } else {
     line2 = line2 + " " + "L: -";    
   }
   display.drawString(0, 34, line2);
 
   if (lastPpm > 0) {
-    display.drawString(0, 49, String("CO2:") + String(lastPpm) + "ppm" );   
+    display.drawString(0, 49, String("CO2:") + String(lastPpm) + "ppm" );
+    display_last_ppm = lastPpm;
   } else {
-    display.drawString(0, 49, String("CO2:") + "-" );       
+    if (display_last_ppm > 0) {
+      display.drawString(0, 49, String("CO2:") + "** " + String(display_last_ppm) + "ppm" );
+    } else {
+      display.drawString(0, 49, String("CO2:") + "-" );
+    }
   }
 
   display.display();
