@@ -69,11 +69,9 @@ void mhz_read_data_impl() {
     Serial.print(temp);
     Serial.print("\n");
 
-    // MQTT: if ppm == -1 , MH-Z19 error.
-    if (lastPpm > 0) {
-      char buf[24] = "";
-      sprintf(buf, "%d", lastPpm);
-    } else {
+    // if ppm == -1 or 0 , MH-Z19 error.
+    if (lastPpm < 1) {
+      Serial.println("MH-Z19B: Maybe error. value set to -1");
       lastPpm = -1;
     }
   }

@@ -35,6 +35,7 @@ void handleData() {
   if (lastPpm > 0) {
     dtostrf(lastPpm, 0, 0, ppm);
   } else {
+    Serial.println("CO2 PPM: Error.");
     snprintf(ppm, sizeof ppm, "ERROR");
   }
 
