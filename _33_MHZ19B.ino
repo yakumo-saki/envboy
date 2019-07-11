@@ -1,69 +1,67 @@
 #include "MHZ19.h"
+#include <SoftwareSerial.h>
 
-bool WAIT_FOR_CO2_WARMUP = false;          // warmupを待つか否か。成功しないのでfalseでOK
-int WAIT_FOR_CO2_SEC = 3;                  // warmupを待つ時間。↓がfalseの時のみ有効
-bool WAIT_FOR_CO2_WARMUP_FOREVER = false;  // warmupが終わるまで永遠に待つ。恐らく無限ループになる
+const bool WAIT_FOR_CO2_WARMUP = false;          // warmupを待つか否か。成功しないのでfalseでOK
+const int  WAIT_FOR_CO2_SEC = 3;                  // warmupを待つ時間。↓がfalseの時のみ有効
+const bool WAIT_FOR_CO2_WARMUP_FOREVER = false;  // warmupが終わるまで永遠に待つ。恐らく無限ループになる
 
 // 400ppmの校正(ABC)を行う。これをするには、20分以上外気に晒し続ける必要がある。
 // 終了後は false に戻す。
-bool AUTO_BASELINE_CORRECTION = false;
+const bool AUTO_BASELINE_CORRECTION = false;
 
 // MHZ19 serial (uart) pins
-const int mhz_rx_pin = 12;  //Serial rx pin no
-const int mhz_tx_pin = 14; //Serial tx pin no
+const int MHZ_RX_PIN = 12;  //Serial rx pin no
+const int MHZ_TX_PIN = 14; //Serial tx pin no
 
-//https://github.com/crisap94/MHZ19
-MHZ19 *mhz19 = new MHZ19(mhz_rx_pin,mhz_tx_pin);
+MHZ19 mhz19;
+SoftwareSerial softSerial(MHZ_RX_PIN, MHZ_TX_PIN);
 
 bool use_MHZ19 = true;
+unsigned long data_timer = 0;
 
 int lastPpm = -1;
 
-// 毎秒データを取りに行くとコケる為
-const int MHZ_GET_DATA_TICK = 3;
-int mhz_tick_count = 99;
-
 void mhz_setup() {
-  mhz19->begin(mhz_rx_pin, mhz_tx_pin);
-  mhz19->setAutoCalibration(AUTO_BASELINE_CORRECTION);
 
-  if (WAIT_FOR_CO2_WARMUP) {
-    int wait = 0;
+  softSerial.begin(9600);   // MH-Z19B's serial is 9600 baud
+  mhz19.begin(softSerial);
+  mhz19.autoCalibration();  // On にしても常に400になることはない
 
-    while( mhz19->isWarming() ) {
-      Serial.print(wait);
-      Serial.print(" MH-Z19 now warming up...  status:");
-      Serial.println(mhz19->getStatus());
-      delay(1000);
-      wait++;
-      if ((wait > WAIT_FOR_CO2_SEC) || WAIT_FOR_CO2_WARMUP_FOREVER) {
-        Serial.println("warmup timeout continue anyway");      
-        break;
-      }
-    }
+  // firmware version
+  char myVersion[4];
+  mhz19.getVersion(myVersion);
+  for(byte i = 0; i < 4; i++)
+  {
+    Serial.print(myVersion[i]);
+    if(i == 1)
+      Serial.print(".");    
   }
+  Serial.println("");
+ 
+  // firmware version
+  Serial.print("Range: ");
+  Serial.println(mhz19.getRange());   
+  Serial.print("Background CO2: ");
+  Serial.println(mhz19.getBackgroundCO2());
+  Serial.print("Temperature Cal: ");
+  Serial.println(mhz19.getTempAdjustment());   
 }
 
 void mhz_read_data() {
-
-  if (mhz_tick_count > MHZ_GET_DATA_TICK) {
-    mhz_tick_count = 0;
-  } else {
-    Serial.printf("MH-Z19B: DEBUG:not tick, skip.");
-    mhz_tick_count++;
-    return;
+  // Check if interval has elapsed (non-blocking delay() equivilant)
+  if (millis() - data_timer >= 2000) {
+    mhz_read_data_impl();
+    data_timer = millis(); 
   }
+}
 
-  if (use_MHZ19) {
+void mhz_read_data_impl() {
+    if (use_MHZ19) {
+
     lastPpm = 0;
 
-    if (!mhz19->isWarming() ) {
-      // 恐らく、常に isWarming() == True.
-      Serial.printf("warn: MH-Z19B: still warming up.");      
-    }
-
-    lastPpm = mhz19->getPPM(MHZ19_POTOCOL::UART);
-    int temp = mhz19->getTemperature();
+    lastPpm = mhz19.getCO2(false);
+    int temp = mhz19.getTemperature();
     
     Serial.printf("MH-Z19B: PPM=");
     Serial.print(lastPpm);
@@ -79,6 +77,4 @@ void mhz_read_data() {
       lastPpm = -1;
     }
   }
-
-  
 }
