@@ -1,6 +1,8 @@
 # envboy
 Arduino environment monitor with display and get data as json over HTTP.
 
+Deprecated. New version -> https://github.com/yakumo-saki/EnvBoyX
+
 ## hardware
 * ESP8266
 * BME280
